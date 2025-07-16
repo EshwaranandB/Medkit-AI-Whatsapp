@@ -4,32 +4,28 @@ from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
 from models import UserProfile
-from pymongo.errors import ServerSelectionTimeoutError
 
 # Load environment variables
 load_dotenv()
 
-# MongoDB URI from .env
+# Get MongoDB URI from .env
 MONGODB_URI = os.getenv("MONGODB_URI")
 
-# Validate URI
-if not MONGODB_URI or "mongodb+srv" not in MONGODB_URI:
+if not MONGODB_URI or "mongodb" not in MONGODB_URI:
     raise ValueError("❌ MONGODB_URI is missing or invalid in the .env file")
 
-# Connect to MongoDB
+# Async MongoDB connection
 try:
     client = AsyncIOMotorClient(MONGODB_URI, serverSelectionTimeoutMS=10000)
     db = client["medkitdatabase"]
     conversations_collection = db["conversations"]
     print("✅ Connected to MongoDB")
-except ServerSelectionTimeoutError as e:
-    print(f"❌ MongoDB server selection timeout: {e}")
-    raise
 except Exception as e:
     print(f"❌ MongoDB connection error: {e}")
     raise
 
 # --- Profile Helpers ---
+
 async def get_or_create_profile(sender: str) -> dict:
     doc = await conversations_collection.find_one({"sender": sender})
     now = datetime.utcnow()
